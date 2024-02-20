@@ -1,0 +1,77 @@
+import React, { useState, useEffect } from 'react';
+import './Form.css';
+
+const Formulaire = () => {
+  const [formData, setFormData] = useState({});
+  const [columns, setColumns] = useState([]);
+
+  const fetchItems = () => {
+    let url = "http://localhost:8080/personnes";
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data.length > 0) {
+          const objectKeys = Object.keys(data[0]);
+          setColumns(objectKeys);
+        }
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const handleChange = (e, columnName) => {
+    setFormData({
+      ...formData,
+      [columnName]: e.target.value,
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const xhr = new XMLHttpRequest();
+    let url = "http://localhost:8080/personnes";
+
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 201) {
+                window.location.href = "/";
+            } else {
+                console.error('Error adding object');
+            }
+        }
+    };
+
+    xhr.send(JSON.stringify(formData));
+};
+
+  return (
+  <form onSubmit={handleSubmit}>
+    {columns.map((column) => (
+      <div key={column}>
+        {column.toLowerCase() === 'id' ? null : (
+          <>
+            <label htmlFor={column}>{column}</label>
+            <input
+              type="text"
+              id={column}
+              name={column}
+              value={formData[column] || ''}
+              onChange={(e) => handleChange(e, column)}
+            />
+          </>
+        )}
+      </div>
+    ))}
+    <button type="submit">Submit</button>
+  </form>
+);
+};
+
+export default Formulaire;
